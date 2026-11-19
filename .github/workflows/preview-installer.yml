@@ -1,0 +1,54 @@
+name: Publish SteamOS 3.10 Preview installer
+
+on:
+  push:
+    branches: [vite-3-10-preview-installer]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-installer-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'saboya/decky-loader'
+    uses: ./.github/workflows/build.yml
+    with:
+      arch: x86_64
+      os: Linux
+      artifact_name: PluginLoader
+
+  publish:
+    needs: build
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: PluginLoader
+          path: release
+      - name: Prepare desktop installer assets
+        run: |
+          bash -n dist/preview-installer/user_install_script.sh
+          cp dist/preview-installer/decky_installer.desktop release/
+          cp dist/preview-installer/user_install_script.sh release/
+          cp dist/plugin_loader-prerelease.service release/
+          chmod +x release/decky_installer.desktop release/user_install_script.sh
+      - name: Publish unofficial preview build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=steamos-3.10-preview
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --prerelease \
+              --title "Unofficial Decky — SteamOS 3.10 Preview fix" \
+              --notes "Experimental Steam Vite compatibility build from saboya/decky-loader. Download decky_installer.desktop, move it to the Desktop, and run it. This is not an official Decky release. Some plugin features remain experimental. Re-run this installer for updated preview builds; the normal Decky release updater does not track this channel."
+          fi
+          gh release upload "$tag" release/PluginLoader release/decky_installer.desktop \
+            release/user_install_script.sh release/plugin_loader-prerelease.service --clobber
+          gh release edit "$tag" --notes "Experimental Steam Vite compatibility build. Source commit: $GITHUB_SHA. Download decky_installer.desktop, move it to the Desktop, and run it. This is not an official Decky release. Re-run this installer for updated preview builds; the normal Decky release updater does not track this channel."

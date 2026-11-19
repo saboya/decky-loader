@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Install Decky — SteamOS 3.10 Preview Fix (Unofficial)
+Comment=Install saboya's experimental Decky build, not the upstream release
+Exec=sh -c "d=\\$(mktemp -d) || exit 1; if curl --fail --show-error --location --connect-timeout 60 https://github.com/saboya/decky-loader/releases/download/steamos-3.10-preview/user_install_script.sh --output \\"\\$d/user_install_script.sh\\"; then bash \\"\\$d/user_install_script.sh\\"; else echo 'Download failed. Press Enter to close.'; read answer; fi; rm -f \\"\\$d/user_install_script.sh\\"; rmdir \\"\\$d\\""
+Icon=steamdeck-gaming-return
+Terminal=true
+Type=Application
+StartupNotify=false
