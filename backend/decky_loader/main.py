@@ -30,6 +30,7 @@ from .helpers import (REMOTE_DEBUGGER_UNIT, create_inject_script, csrf_middlewar
                      mkdir_as_user, get_system_pythonpaths, get_effective_user_id)
                      
 from .injector import get_gamepadui_tab, Tab
+from .vite import prepare_frontend
 from .loader import Loader
 from .settings import SettingsManager
 from .updater import Updater
@@ -249,7 +250,8 @@ class PluginManager:
                 await restart_webhelper()
                 await sleep(1) # To give CEF enough time to close down the websocket
                 return # We'll catch the next tab in the main loop
-            await tab.evaluate_js(create_inject_script("index.js" if self.webhelper_crash_count < 3 else "fallback.js"), False, False, False)
+            entry = await prepare_frontend(tab) if self.webhelper_crash_count < 3 else "fallback.js"
+            await tab.evaluate_js(create_inject_script(entry), False, False, False)
             if self.webhelper_crash_count > 2:
                 self.reinject = False
                 await sleep(1)

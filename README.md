@@ -117,6 +117,11 @@ Please consult [the wiki page regarding development](https://wiki.deckbrew.xyz/e
 1. Use the VS Code tasks or `deck.sh` script to deploy your changes to your Steam Deck to test them.
 1. You will be testing your changes with the Python script version. You will need to build, deploy, and reload each time.
 
+The normal build includes both Webpack and experimental Vite Steam UI support.
+Decky selects the frontend at runtime; no additional installer or build flag is
+required. See [Steam Vite compatibility](docs/VITE_COMPATIBILITY.md) for details
+and current limitations.
+
 ⚠️ If you are recieving build errors due to an out of date library, you should run this command inside of your repository.
 
 ```bash
