@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import commonjs from '@rollup/plugin-commonjs';
 import image from '@rollup/plugin-image';
 import json from '@rollup/plugin-json';
@@ -20,25 +22,25 @@ const frontendConfig = (vite) => [
         name: 'experimental-steam-vite-compat',
         resolveId(source, importer) {
           if (importer?.includes('@decky/ui/') && /(^|\/)Tabs$/.test(source)) {
-            return new URL('./compat/vite-tabs.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-tabs.js', import.meta.url));
           }
           if (importer?.includes('@decky/ui/') && /(^|\/)Field$/.test(source)) {
-            return new URL('./compat/vite-field.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-field.js', import.meta.url));
           }
           if (importer?.includes('@decky/ui/') && /(^|\/)Focusable$/.test(source)) {
-            return new URL('./compat/vite-focusable.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-focusable.js', import.meta.url));
           }
           if (importer?.includes('@decky/ui/') && /(^|\/)static-classes$/.test(source)) {
-            return new URL('./compat/vite-static-classes.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-static-classes.js', import.meta.url));
           }
           if (importer?.includes('@decky/ui/') && /(^|\/)Panel$/.test(source)) {
-            return new URL('./compat/vite-panel.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-panel.js', import.meta.url));
           }
           if (
             source === '@decky/ui/dist/webpack' ||
             (importer?.includes('@decky/ui/') && /(^|\/)webpack$/.test(source))
           ) {
-            return new URL('./compat/vite-webpack.js', import.meta.url).pathname;
+            return fileURLToPath(new URL('./compat/vite-webpack.js', import.meta.url));
           }
         },
         transform(code, id) {

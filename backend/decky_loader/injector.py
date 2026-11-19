@@ -61,6 +61,10 @@ class Tab:
             return None
         raise RuntimeError("Websocket not opened")
 
+    async def send_devtools_command(self, method: str, **params: Any) -> Dict[str, Any] | None:
+        """Send a CDP command over the already-open socket and await its reply."""
+        return await self._send_devtools_cmd({'method': method, 'params': params})
+
     async def evaluate_js(self, js: str, run_async: bool | None = False, manage_socket: bool | None = True, get_result: bool = True):
         try:
             if manage_socket:

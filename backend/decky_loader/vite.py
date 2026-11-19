@@ -2,6 +2,7 @@
 
 from asyncio import sleep, timeout
 from logging import getLogger
+from typing import Any
 
 from .injector import Tab
 
@@ -10,9 +11,9 @@ logger = getLogger('Vite')
 
 async def prepare_frontend(tab: Tab) -> str:
     """Return a bundled entry point, retaining the original Webpack path."""
-    async def call(method, **params):
+    async def call(method: str, **params: Any) -> dict[str, Any]:
         async with timeout(45):
-            response = await tab._send_devtools_cmd({'method': method, 'params': params})
+            response = await tab.send_devtools_command(method, **params)
         if response is None or 'error' in response:
             raise RuntimeError(f'Steam debugger command failed: {method}')
         result = response['result']
@@ -20,10 +21,10 @@ async def prepare_frontend(tab: Tab) -> str:
             raise RuntimeError(f'Steam evaluation failed: {result["exceptionDetails"]}')
         return result
 
-    async def evaluate(expression, **params):
+    async def evaluate(expression: str, **params: Any) -> dict[str, Any]:
         return await call('Runtime.evaluate', expression=expression, **params)
 
-    async def properties(object_id):
+    async def properties(object_id: str) -> dict[str, Any]:
         return await call('Runtime.getProperties', objectId=object_id, ownProperties=True)
 
     # Steam may expose its debugger before its module runtime has initialized.
