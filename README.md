@@ -53,6 +53,17 @@ For more information about Decky Loader as well as documentation and development
 
 ## 💾 Installation
 
+### Unofficial SteamOS 3.10 Preview fix
+
+This distribution branch publishes an **experimental, unofficial** fixed build
+for x86_64 Steam Decks. After the preview publishing workflow succeeds, download
+[its desktop installer](https://github.com/saboya/decky-loader/releases/download/steamos-3.10-preview/decky_installer.desktop),
+move it to your Desktop, and run it. Remove Firefox's `.download` suffix if
+necessary. This shortcut installs the fixed build from `saboya/decky-loader`,
+not the upstream release. See [preview installation and updates](docs/PREVIEW_INSTALLER.md).
+
+### Official Decky installation
+
 - This installation can be done without an admin/sudo password set.
 
 1. Prepare a mouse and keyboard if possible.
