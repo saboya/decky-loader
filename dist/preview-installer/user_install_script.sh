@@ -6,9 +6,27 @@ set -o pipefail
 LOADER_REPO="saboya/decky-loader"
 RELEASE_TAG="steamos-3.10-preview"
 
-if (( EUID != 0 )) && ! zenity --title="Unofficial Decky — SteamOS 3.10 Preview" --question --width=500 \
-    --text="This installs saboya's experimental SteamOS 3.10 Preview fix, NOT an official Decky release.\n\nPlugins and settings are preserved. Some plugin features may not work.\n\nContinue?"; then
-    exit 0
+# Check dependencies before opening dialogs or changing anything.
+for dependency in zenity jq curl; do
+    if ! command -v "$dependency" >/dev/null 2>&1; then
+        printf 'Decky installer requires %s, but it was not found. Run from SteamOS Desktop Mode.\n' "$dependency" >&2
+        exit 1
+    fi
+done
+
+if (( EUID != 0 )); then
+    # Zenity can return 1 for both cancellation and a display error.
+    dialog_error=$(zenity --title="Unofficial Decky — SteamOS 3.10 Preview" --question --width=500 \
+        --text="This installs saboya's experimental SteamOS 3.10 Preview fix, NOT an official Decky release.\n\nPlugins and settings are preserved. Some plugin features may not work.\n\nContinue?" 2>&1)
+    dialog_status=$?
+    if (( dialog_status != 0 )); then
+        if (( dialog_status == 1 )) && [[ -z "$dialog_error" ]]; then
+            exit 0
+        fi
+        printf 'Could not open the installer dialog (Zenity exit %s). Run from SteamOS Desktop Mode.\n%s\n' \
+            "$dialog_status" "$dialog_error" >&2
+        exit "$dialog_status"
+    fi
 fi
 
 # if a password was set by decky, this will run when the program closes
@@ -20,21 +38,6 @@ temp_pass_cleanup() {
 zen_nospam() {
   zenity 2> >(grep -v 'Gtk' >&2) "$@"
 }
-
-# check if JQ is installed
-if ! command -v jq &> /dev/null
-then
-    echo "JQ could not be found, please install it"
-    echo "Info on how to install it can be found at https://stedolan.github.io/jq/download/"
-    exit 1
-fi
-
-# check if github.com is reachable
-if ! curl -Is https://github.com | head -1 | grep 200 > /dev/null
-then
-    echo "Github appears to be unreachable, you may not be connected to the internet"
-    exit 1
-fi
 
 # if the script is not root yet, get the password and rerun as root
 if (( $EUID != 0 )); then
@@ -53,10 +56,7 @@ if (( $EUID != 0 )); then
         # get password
         FINISHED="false"
         while [ "$FINISHED" != "true" ]; do
-            PASS=$(zen_nospam --title="Decky Installer" --width=300 --height=100 --entry --hide-text --text="Enter your sudo/admin password")
-            if [[ $? -eq 1 ]] || [[ $? -eq 5 ]]; then
-                exit 1
-            fi
+            PASS=$(zen_nospam --title="Decky Installer" --width=300 --height=100 --entry --hide-text --text="Enter your sudo/admin password") || exit $?
             if ( echo "$PASS" | sudo -S -k true ); then
                 FINISHED="true"
             else
@@ -65,10 +65,10 @@ if (( $EUID != 0 )); then
         done
     fi
 
-    if ! [ $USER = "deck" ]; then
+    if [[ "$USER" != "deck" ]]; then
         zen_nospam --title="Decky Installer" --width=300 --height=100 --warning --text "You appear to not be on a deck.\nDecky should still mostly work, but you may not get full functionality."
     fi
-    
+
     echo "$PASS" | sudo -E -S -k bash "$0" "$@" # rerun script as root
     exit $?
 fi
@@ -86,15 +86,12 @@ if [[ -f "${USER_DIR}/homebrew/services/PluginLoader" ]] ; then
     OPTION=$(zen_nospam --title="Decky Installer" --width=750 --height=400 --list --radiolist --text "Select Option:" --hide-header --column "Buttons" --column "Choice" --column "Info" \
     TRUE "install 3.10 preview fix" "Unofficial build from saboya/decky-loader" \
     FALSE "uninstall decky loader" "Will keep config intact" \
-    FALSE "wipe decky loader" "Will NOT keep config intact")
+    FALSE "wipe decky loader" "Will NOT keep config intact") || exit $?
 else
     OPTION=$(zen_nospam --title="Decky Installer" --width=750 --height=300 --list --radiolist --text "Select branch to install:" --hide-header --column "Buttons" --column "Choice" --column "Info" \
-    TRUE "install 3.10 preview fix" "Unofficial build from saboya/decky-loader")
+    TRUE "install 3.10 preview fix" "Unofficial build from saboya/decky-loader") || exit $?
 fi
 
-if [[ $? -eq 1 ]] || [[ $? -eq 5 ]]; then
-    exit 1
-fi
 [[ -n "$OPTION" ]] || exit 0
 
 # uninstall if uninstall option was selected
